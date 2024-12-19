@@ -3,11 +3,13 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches:
-      - main  # 或者是 master，取决于您的默认分支名称
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v3
       
@@ -16,8 +18,19 @@ jobs:
         with:
           node-version: '20'
           
-      - name: Install Dependencies
-        run: npm install
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+            
+      - name: Clean install dependencies
+        run: npm ci
+        
+      - name: Clean dist directory
+        run: rm -rf dist
         
       - name: Build
         run: npm run build
@@ -26,4 +39,5 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist  # 您的构建输出目录 
+          publish_dir: ./dist
+          force_orphan: true
