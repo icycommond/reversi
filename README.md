@@ -1,5 +1,7 @@
 # React 黑白棋游戏
 
+[在线体验](https://icycommond.github.io/reversi/)
+
 ## 项目简介
 这是一个使用现代 Web 技术栈开发的黑白棋（Reversi/Othello）游戏。游戏支持双人对战，具有简洁直观的界面和流畅的游戏体验。
 
