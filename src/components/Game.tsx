@@ -94,7 +94,7 @@ export default function Game() {
   const getAIMove = (validMoves: Position[]): Position => {
     // 1. 优先选择角落位置
     const corners = validMoves.filter(
-      move =>
+      (move) =>
         (move.row === 0 && move.col === 0) ||
         (move.row === 0 && move.col === 7) ||
         (move.row === 7 && move.col === 0) ||
@@ -106,9 +106,12 @@ export default function Game() {
 
     // 2. 避免下在角落旁边的位置
     const safeMoves = validMoves.filter(
-      move =>
+      (move) =>
         !(
-          (move.row === 0 || move.row === 1 || move.row === 6 || move.row === 7) &&
+          (move.row === 0 ||
+            move.row === 1 ||
+            move.row === 6 ||
+            move.row === 7) &&
           (move.col === 0 || move.col === 1 || move.col === 6 || move.col === 7)
         )
     );
@@ -124,7 +127,7 @@ export default function Game() {
   const handleMove = (row: number, col: number) => {
     // 如果不是玩家的回合，或者游戏结束，则不处理
     if (currentPlayer !== "black" || gameOver) return;
-    
+
     if (!validMoves.some((move) => move.row === row && move.col === col))
       return;
 
@@ -240,21 +243,21 @@ export default function Game() {
           const aiMove = getAIMove(validMoves);
           const newBoard = [...board.map((row) => [...row])];
           newBoard[aiMove.row][aiMove.col] = "white";
-          
+
           // 翻转棋子
           flipPieces(newBoard, aiMove.row, aiMove.col, "white");
-          
+
           setBoard(newBoard);
           setCurrentPlayer("black");
         }
-      }, 1000); // 1秒延迟
+      }, 500); // 1秒延迟
 
       return () => clearTimeout(timer);
     }
   }, [currentPlayer, validMoves, gameOver]);
 
   return (
-    <div className="flex flex-col items-center justify-center w-full h-full bg-gray-100">
+    <div className="flex flex-col items-center justify-center w-full h-full bg-gray-100 dark:bg-gray-700">
       <h1 className="text-3xl font-bold mb-4">黑白棋</h1>
       <div className="flex justify-center gap-8 mb-4">
         <div className="flex items-center gap-2">
@@ -277,16 +280,20 @@ export default function Game() {
         validMoves={validMoves}
         onCellClick={handleMove}
       />
-      {gameOver && (
-        <div className="text-xl font-bold mb-4 text-red-600">
-          游戏结束！
-          {blackCount > whiteCount
-            ? "黑棋胜利！"
-            : whiteCount > blackCount
-            ? "白棋胜利！"
-            : "平局！"}
-        </div>
-      )}
+      <div className="text-xl font-bold mb-4 text-red-600">
+        {gameOver ? (
+          <>
+            游戏结束！
+            {blackCount > whiteCount
+              ? "黑棋胜利！"
+              : whiteCount > blackCount
+              ? "白棋胜利！"
+              : "平局！"}
+          </>
+        ) : (
+          <>&emsp;</>
+        )}
+      </div>
     </div>
   );
 }
