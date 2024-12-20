@@ -90,8 +90,41 @@ export default function Game() {
     return false;
   };
 
-  // 处理落子
+  // 添加 AI 移动逻辑
+  const getAIMove = (validMoves: Position[]): Position => {
+    // 1. 优先选择角落位置
+    const corners = validMoves.filter(
+      move =>
+        (move.row === 0 && move.col === 0) ||
+        (move.row === 0 && move.col === 7) ||
+        (move.row === 7 && move.col === 0) ||
+        (move.row === 7 && move.col === 7)
+    );
+    if (corners.length > 0) {
+      return corners[Math.floor(Math.random() * corners.length)];
+    }
+
+    // 2. 避免下在角落旁边的位置
+    const safeMoves = validMoves.filter(
+      move =>
+        !(
+          (move.row === 0 || move.row === 1 || move.row === 6 || move.row === 7) &&
+          (move.col === 0 || move.col === 1 || move.col === 6 || move.col === 7)
+        )
+    );
+    if (safeMoves.length > 0) {
+      return safeMoves[Math.floor(Math.random() * safeMoves.length)];
+    }
+
+    // 3. 如果没有更好的选择，随机选择一个有效位置
+    return validMoves[Math.floor(Math.random() * validMoves.length)];
+  };
+
+  // 修改 handleMove 函数
   const handleMove = (row: number, col: number) => {
+    // 如果不是玩家的回合，或者游戏结束，则不处理
+    if (currentPlayer !== "black" || gameOver) return;
+    
     if (!validMoves.some((move) => move.row === row && move.col === col))
       return;
 
@@ -102,8 +135,7 @@ export default function Game() {
     flipPieces(newBoard, row, col, currentPlayer);
 
     setBoard(newBoard);
-    const nextPlayer = currentPlayer === "black" ? "white" : "black";
-    setCurrentPlayer(nextPlayer);
+    setCurrentPlayer("white"); // 切换到 AI 回合
   };
 
   // 翻转棋子
@@ -159,7 +191,7 @@ export default function Game() {
   // 在 state 声明之后添加这个 useEffect
   useEffect(() => {
     updateValidMoves(board, currentPlayer);
-  }, [board, currentPlayer]); // 当棋盘或当前玩家改变时更新有效移动位置
+  }, [board, currentPlayer]); // 当棋盘或当前��家改变时更新有效移动位置
 
   // 添加一个检查对手是否有效移动的函数
   const checkOpponentMoves = (currentBoard: Board, player: CellState) => {
@@ -199,6 +231,28 @@ export default function Game() {
     }
   }, [validMoves, currentPlayer, board, gameOver]);
 
+  // 添加 AI 移动的 useEffect
+  useEffect(() => {
+    if (currentPlayer === "white" && !gameOver) {
+      // 添加短暂延迟，使 AI 走棋更自然
+      const timer = setTimeout(() => {
+        if (validMoves.length > 0) {
+          const aiMove = getAIMove(validMoves);
+          const newBoard = [...board.map((row) => [...row])];
+          newBoard[aiMove.row][aiMove.col] = "white";
+          
+          // 翻转棋子
+          flipPieces(newBoard, aiMove.row, aiMove.col, "white");
+          
+          setBoard(newBoard);
+          setCurrentPlayer("black");
+        }
+      }, 1000); // 1秒延迟
+
+      return () => clearTimeout(timer);
+    }
+  }, [currentPlayer, validMoves, gameOver]);
+
   return (
     <div className="flex flex-col items-center justify-center w-full h-full bg-gray-100">
       <h1 className="text-3xl font-bold mb-4">黑白棋</h1>
@@ -215,7 +269,7 @@ export default function Game() {
       <div className="mb-4">
         当前玩家:{" "}
         <span className="font-bold">
-          {currentPlayer === "black" ? "黑棋" : "白棋"}
+          {currentPlayer === "black" ? "玩家（黑棋）" : "电脑（白棋）"}
         </span>
       </div>
       <GameBoard
