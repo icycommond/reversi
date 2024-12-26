@@ -196,43 +196,36 @@ export default function Game() {
     updateValidMoves(board, currentPlayer);
   }, [board, currentPlayer]); // 当棋盘或当前��家改变时更新有效移动位置
 
-  // 添加一个检查对手是否有效移动的函数
-  const checkOpponentMoves = (currentBoard: Board, player: CellState) => {
-    const opponent = player === "black" ? "white" : "black";
-    for (let row = 0; row < 8; row++) {
-      for (let col = 0; col < 8; col++) {
-        if (
-          currentBoard[row][col] === null &&
-          canPlace(currentBoard, row, col, opponent)
-        ) {
-          return true;
-        }
-      }
-    }
-    return false;
-  };
+  const [cantMovePool, setCantMovePool] = useState<CellState[]>([]);
 
   // 修改检查跳过的 useEffect
   useEffect(() => {
     if (gameOver) return;
 
+    if (
+      (["black", "white"] as CellState[])
+        .map((p) => cantMovePool.includes(p))
+        .every((b) => !!b)
+    ) {
+      setGameOver(true);
+      return;
+    }
+
     if (validMoves.length === 0) {
       console.log(`${currentPlayer === "black" ? "黑棋" : "白棋"}无路可走`);
-
-      // 检查对手是否有路可走
-      if (!checkOpponentMoves(board, currentPlayer)) {
-        console.log("游戏结束！双方都无路可走");
-        setGameOver(true);
-        return;
-      }
-
+      // 直接切换到对手的回合
       const timer = setTimeout(() => {
         setCurrentPlayer(currentPlayer === "black" ? "white" : "black");
+        setCantMovePool(p => [...p, currentPlayer]);
       }, 1000);
 
       return () => clearTimeout(timer);
+    } else if (cantMovePool.length > 0) {
+      setCantMovePool([]);
+      return;
     }
-  }, [validMoves, currentPlayer, board, gameOver]);
+
+  }, [validMoves, currentPlayer, board, gameOver, cantMovePool]);
 
   // 添加 AI 移动的 useEffect
   useEffect(() => {
